@@ -160,7 +160,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
       <div class="pitch" id="pitch"></div>
     </div>
     <div class="row">
-      <button class="btn" id="skipBtn" hidden>No sabe, pasa</button>
+      <button class="btn" id="skipBtn" hidden>Tirar de nuevo</button>
       <button class="btn" id="endBtn">Terminar y ver equipos</button>
     </div>
     <button class="link" id="back">Volver a jugadores</button>
@@ -330,7 +330,7 @@ function nextTurn(){
   do{n=(n+1)%players.length}while((filled(players[n])>=SLOTS||players[n].turns>=SLOTS)&&n!==turn);
   turn=n;renderTurn();
 }
-$("skipBtn").onclick=()=>{if(phase==="pick")nextTurn()};
+$("skipBtn").onclick=()=>{if(phase!=="pick")return;clearInterval(tId);phase="idle";$("pick").hidden=true;$("skipBtn").hidden=true;$("spin").onclick()};
 $("footballer").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();$("pickHint").textContent="Ahora tocá una posición libre en tu cancha."}});
 
 /* ---------- Final ---------- */
