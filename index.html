@@ -74,9 +74,6 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .reel.let::after{border:4px solid var(--fg);border-bottom:6px solid var(--green);border-radius:4px;box-shadow:0 0 0 2px var(--bg)}
 .reel.cat .cat-item.hit{color:var(--fg)}
 .reel.let .let-item.hit{font-size:44px}
-.timer{position:absolute;right:-6px;bottom:-14px;background:var(--green);color:var(--green-ink);font-family:var(--f-display);font-size:20px;
-  border-radius:999px 0 0 999px;padding:4px 16px;min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
-.timer.low{background:var(--red);color:#fff}
 .result{min-height:48px;text-align:center;font-size:17px;line-height:1.35}
 .result strong{color:var(--green)}
 .spin{font-family:var(--f-display);font-weight:400;font-size:30px;letter-spacing:.06em;padding:16px;border-radius:10px;background:var(--green);color:var(--green-ink);text-transform:uppercase}
@@ -133,9 +130,6 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
       <div class="opt"><span>Formación</span>
         <select id="fsel"><option>4-3-3</option><option>4-4-2</option><option>4-2-3-1</option><option>3-5-2</option><option>3-4-3</option></select>
       </div>
-      <div class="opt"><span>Tiempo para responder</span>
-        <select id="tsel"><option value="0">Sin tiempo</option><option value="10">10 s</option><option value="15" selected>15 s</option><option value="20">20 s</option><option value="30">30 s</option></select>
-      </div>
       <label class="check"><input type="checkbox" id="hard"> Incluir letras difíciles (K, Ñ, Q, W, X, Y, Z)</label>
     </div>
     <button class="spin" id="start" disabled>Empezar</button>
@@ -147,7 +141,6 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
     <div class="stage">
       <div class="reel cat"><div class="strip" id="catStrip"></div></div>
       <div class="reel let"><div class="strip" id="letStrip"></div></div>
-      <div class="timer" id="timer" hidden>15</div>
     </div>
     <div class="result" id="result"></div>
     <button class="spin" id="spin">Girar</button>
@@ -193,7 +186,7 @@ const FORMS={
 };
 const REPS=14, BASE=3, SLOTS=11;
 
-let players=[], turn=0, formation="4-3-3", letters=EASY, timeLimit=15, phase="idle", tId=null, lastSpin=null;
+let players=[], turn=0, formation="4-3-3", letters=EASY, phase="idle", tId=null, lastSpin=null;
 try{const s=JSON.parse(localStorage.getItem("rf-players")||"null");if(Array.isArray(s))players=s.map(n=>({name:String(n),team:[]}))}catch(e){}
 
 const $=id=>document.getElementById(id);
@@ -297,17 +290,12 @@ function renderTurn(){
   const s=document.createElement("span");s.innerHTML="Le toca a <strong></strong>. Tocá girar.";
   s.querySelector("strong").textContent=players[turn].name;$("result").append(s);
   phase="idle";
-  $("spin").disabled=false;$("pick").hidden=true;$("skipBtn").hidden=true;$("timer").hidden=true;
+  $("spin").disabled=false;$("pick").hidden=true;$("skipBtn").hidden=true;
   renderPitch();
-}
-function startTimer(){
-  clearInterval(tId);if(!timeLimit){$("timer").hidden=true;return}
-  let t=timeLimit;const el=$("timer");el.hidden=false;el.textContent=t;el.classList.remove("low");
-  tId=setInterval(()=>{t--;el.textContent=Math.max(t,0);el.classList.toggle("low",t<=5);if(t<=0)clearInterval(tId)},1000);
 }
 $("spin").onclick=async()=>{
   if(phase!=="idle")return;phase="spinning";
-  $("spin").disabled=true;$("timer").hidden=true;clearInterval(tId);
+  $("spin").disabled=true;
   const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [cat,let_]=await Promise.all([spinReel(reels.catStrip,reduce?10:3000,4),spinReel(reels.letStrip,reduce?10:3700,5)]);
   lastSpin={cat,let_};
@@ -318,7 +306,7 @@ $("spin").onclick=async()=>{
   s.querySelector("em").textContent="“"+cat.toLowerCase()+"”";
   $("result").append(s);
   phase="pick";$("footballer").value="";$("pickHint").textContent="Escribí el nombre y tocá una posición libre en tu cancha.";
-  $("pick").hidden=false;$("skipBtn").hidden=false;renderPitch();startTimer();
+  $("pick").hidden=false;$("skipBtn").hidden=false;renderPitch();
   $("footballer").focus({preventScroll:true});
 };
 function nextTurn(){
@@ -353,7 +341,7 @@ $("endBtn").onclick=showFinal;
 /* ---------- Flow ---------- */
 function startGame(){
   letters=$("hard").checked?[...EASY,...HARD].sort((a,b)=>a.localeCompare(b,"es")):EASY;
-  timeLimit=+$("tsel").value;formation=$("fsel").value;
+  formation=$("fsel").value;
   players.forEach(p=>{p.team=Array(SLOTS).fill(null);p.turns=0});turn=0;
   $("setup").hidden=true;$("final").hidden=true;$("game").hidden=false;$("main").classList.remove("wide");
   makeReel("catStrip",[...CATS].sort(()=>Math.random()-.5),"cat-item");
